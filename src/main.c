@@ -21,7 +21,7 @@ enum Commands {
 
 
 
-char * parseBulkString(char ** input , int length){
+char * parseBulkString(unsigned char ** input , int length){
 
 	char *str = (char*)malloc(length + 1);
 
@@ -49,7 +49,9 @@ char * parseBulkString(char ** input , int length){
  * Why not a pointer to buffer, because that will not update the buffer in the main function itself. 
 */
 
-int parseLen(char **input){
+int parseLen(unsigned char **input){
+
+	printf("Character skipped is %c\n", **input);
 
 	(*input)++; // Skip the initial character. 
 
@@ -57,9 +59,9 @@ int parseLen(char **input){
 
 	// Atoi type function. 
 
-	while(**input != '\r' || **input != '\n'){
+	while(**input != '\r'){
 
-		length = length * 10 + ((**input) - '0')*10; 
+		length = length * 10 + (**input - '0'); 
 
 		(*input)++; 
 
@@ -100,28 +102,32 @@ void *routine(void *arg){
 
 	while(1){
 	
-	char *buf = (char*)malloc(MAX_SIZE);
+	unsigned char *buf = (char*)malloc(MAX_SIZE);
 
-	char** memoryAddress = &buf; 
+	unsigned char** memoryAddress = &buf; 
 
-	char* temp = buf; 
+	unsigned char* temp = buf; 
 
-	if(recv(fd , buf , MAX_SIZE , 0) <= 0){
+	if(read(fd , buf , MAX_SIZE ) <= 0){
 
 		printf("Connection terminated.\n"); 
 		free(buf);
 
-		return; 
+		return NULL; 
 
 	}
 
 	int numArgs = parseLen(memoryAddress);
+
+	printf("The number of arguments are %d\n", numArgs); 
 
 	for(int i = 0 ; i < numArgs ; i++){
 
 		int stringlength = parseLen(memoryAddress);
 
 		char* bulkstr = parseBulkString(memoryAddress , stringlength); 
+
+		printf("command is %s \n" , bulkstr); 
 
 
 		enum Commands command = parseCommand(bulkstr); 
@@ -141,7 +147,7 @@ void *routine(void *arg){
 
 			char* toSend = (char*)malloc(currlen + 5); 
 
-			sprintf(toSend , "$%d/r/n%s/r/n" , strlen(toSend) , currentArg);
+			sprintf(toSend , "$%d/r/n%s/r/n" , (int)strlen(toSend) , currentArg);
 
 			send(fd , toSend , currlen , 0); 
 
