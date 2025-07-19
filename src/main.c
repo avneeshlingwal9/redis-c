@@ -15,7 +15,7 @@
 
 enum Commands {
 	PING, 
-	ECH0, 
+	ECHO, 
 	UNKNOWN,
 };
 
@@ -27,8 +27,7 @@ char * parseBulkString(char ** input , int length){
 
 	if(str == NULL){
 
-		printf("Not able to allocate memory.\n");
-		return 1; 
+		printf("Not able to allocate memory.\n"); 
 
 	}
 
@@ -101,7 +100,7 @@ void *routine(void *arg){
 
 	int fd = *(int*)arg;
 	
-	char buf[MAX_SIZE]; 
+	char *buf = (char*)malloc(MAX_SIZE);
 
 	char** memoryAddress = &buf; 
 
@@ -118,7 +117,7 @@ void *routine(void *arg){
 			char* bulkstr = parseBulkString(memoryAddress , stringlength); 
 
 
-			enum Commands command = bulkstr; 
+			enum Commands command = parseCommand(bulkstr); 
 
 			if(command == PING){
 
@@ -140,7 +139,7 @@ void *routine(void *arg){
 				send(fd , toSend , currlen , 0); 
 
 				free(currentArg);
-				free(currlen); 
+				free(toSend); 
 			}
 
 
@@ -153,6 +152,8 @@ void *routine(void *arg){
 		
 
 	}
+
+	free(buf); 
 
 
 
