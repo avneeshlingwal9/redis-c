@@ -61,7 +61,7 @@ void *routine(void *arg){
 			for(int currindex = 4 ; currindex < i ; currindex += 2){
 
 				char output[MAX_ARGS]; 
-				sprintf(output , "$%d\\r\\n%s\\r\\n" , (int)strlen(args[currindex]) , args[currindex]);
+				sprintf(output , "$%d\r\n%s\r\n" , (int)strlen(args[currindex]) , args[currindex]);
 
 				send(fd , output , strlen(output) , 0); 
 
