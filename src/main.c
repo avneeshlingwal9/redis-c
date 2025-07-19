@@ -29,6 +29,8 @@ char * parseBulkString(unsigned char ** input , int length){
 
 		printf("Not able to allocate memory.\n"); 
 
+		return NULL;
+
 	}
 
 	strncpy(str , *input , length); 
@@ -53,7 +55,6 @@ char * parseBulkString(unsigned char ** input , int length){
 
 int parseLen(unsigned char **input){
 
-	printf("Character skipped is %c\n", **input);
 
 	(*input)++; // Skip the initial character. 
 
@@ -121,7 +122,7 @@ void *routine(void *arg){
 
 	int numArgs = parseLen(memoryAddress);
 
-	printf("The number of arguments are %d\n", numArgs); 
+
 
 	for(int i = 0 ; i < numArgs ; i++){
 
@@ -129,14 +130,18 @@ void *routine(void *arg){
 
 		char* bulkstr = parseBulkString(memoryAddress , stringlength); 
 
-		printf("command is %s \n" , bulkstr); 
+		if(bulkstr == NULL){
+			return NULL; 
+		}
+
+
 
 
 		enum Commands command = parseCommand(bulkstr); 
 
 		if(command == PING){
 
-			send(fd , PONG , MAX_SIZE , 0); 
+			send(fd , PONG , strlen(PONG) , 0); 
 
 		}
 		else{
@@ -232,9 +237,7 @@ int main() {
 	
 	int client_fd = 0; 
 
-	pthread_t offshoots[5]; 
 
-	int thread_index = 0 ; 
 	
 	while( (client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len)) != -1 ){
 	printf("Client connected\n");
@@ -243,16 +246,10 @@ int main() {
 
 	*arg = client_fd; 
 
-	if(thread_index == 5){
+	pthread_t offshoot;
 
-		printf("Not able to connect.\n"); 
-		return 3; 
-
-	}
-
-	if(pthread_create(&offshoots[thread_index] , NULL , &routine , arg) == -1){
-
-		thread_index++; 
+	if(pthread_create(&offshoot , NULL , &routine , arg) == -1){
+ 
 		perror("Not able to create thread.\n"); 
 		return 2; 
 
@@ -264,11 +261,6 @@ int main() {
 
 }
 
-	for(int i = 0 ; i < thread_index ; i++){
-
-		pthread_join(offshoots[i] , NULL); 
-
-	}
 
 
 	
