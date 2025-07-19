@@ -35,6 +35,8 @@ char * parseBulkString(unsigned char ** input , int length){
 
 	str[length] = '\0'; 
 
+	(*input) += length;
+
 	(*input) += 2 ; // Skip CRLF.
 
 	return str; 
