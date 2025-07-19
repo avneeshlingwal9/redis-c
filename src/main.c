@@ -10,6 +10,7 @@
 #define PONG "+PONG\r\n"
 #define MAX_SIZE 2048
 
+
 int main() {
 	// Disable output buffering
 	setbuf(stdout, NULL);
@@ -57,7 +58,9 @@ int main() {
 	client_addr_len = sizeof(client_addr);
 
 	
-	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+	int client_fd = 0; 
+	
+	while( (client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len)) != -1 ){
 	printf("Client connected\n");
 
 	char* message[MAX_SIZE];
@@ -66,7 +69,7 @@ int main() {
 
 	send(client_fd , PONG , strlen(PONG), 0); 
 
-}
+}}
 	
 	close(server_fd);
 
