@@ -97,52 +97,64 @@ enum Commands parseCommand(char *bulkstr){
 void *routine(void *arg){
 
 	int fd = *(int*)arg;
+
+	while(1){
 	
 	char *buf = (char*)malloc(MAX_SIZE);
 
 	char** memoryAddress = &buf; 
 
+	char* temp = buf; 
+
+	if(recv(fd , buf , MAX_SIZE , 0) <= 0){
+
+		printf("Connection terminated.\n"); 
+		free(buf);
+
+		return; 
+
+	}
+
+	int numArgs = parseLen(memoryAddress);
+
+	for(int i = 0 ; i < numArgs ; i++){
+
+		int stringlength = parseLen(memoryAddress);
+
+		char* bulkstr = parseBulkString(memoryAddress , stringlength); 
 
 
-	while(recv(fd , buf , MAX_SIZE , 0) != 0){
+		enum Commands command = parseCommand(bulkstr); 
 
-		int numArgs = parseLen(memoryAddress);
+		if(command == PING){
 
-		for(int i = 0 ; i < numArgs ; i++){
-
-			int stringlength = parseLen(memoryAddress);
-
-			char* bulkstr = parseBulkString(memoryAddress , stringlength); 
-
-
-			enum Commands command = parseCommand(bulkstr); 
-
-			if(command == PING){
-
-				send(fd , PONG , MAX_SIZE , 0); 
-
-			}
-			else{
-
-				i++; // Skipping to next argument. 
-
-				int currlen = parseLen(memoryAddress);
-				
-				char* currentArg = parseBulkString(memoryAddress , currlen); 
-
-				char* toSend = (char*)malloc(currlen + 5); 
-
-				sprintf(toSend , "$%d/r/n%s/r/n" , strlen(toSend) , currentArg);
-
-				send(fd , toSend , currlen , 0); 
-
-				free(currentArg);
-				free(toSend); 
-			}
-
+			send(fd , PONG , MAX_SIZE , 0); 
 
 		}
+		else{
 
+			i++; // Skipping to next argument. 
+
+			int currlen = parseLen(memoryAddress);
+				
+			char* currentArg = parseBulkString(memoryAddress , currlen); 
+
+			char* toSend = (char*)malloc(currlen + 5); 
+
+			sprintf(toSend , "$%d/r/n%s/r/n" , strlen(toSend) , currentArg);
+
+			send(fd , toSend , currlen , 0); 
+
+			free(currentArg);
+			free(toSend); 
+			
+		}
+
+
+	}
+
+		free(buf); 
+		free(temp); 
 
 
 
@@ -151,7 +163,6 @@ void *routine(void *arg){
 
 	}
 
-	free(buf); 
 
 
 
