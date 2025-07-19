@@ -169,19 +169,15 @@ void *routine(void *arg){
 
 
 	}
-
-		free(buf); 
-		free(temp); 
-
-
-
-
-		
+	
+	free(temp); 
 
 	}
 
 
 
+
+	free(arg); 
 
 	close(fd); 
 
