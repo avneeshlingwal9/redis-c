@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#define PONG "+PONG\\r\\n"
+#define PONG "+PONG\r\n"
 
 int main() {
 	// Disable output buffering
