@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #define PONG "+PONG\r\n"
+#define MAX_SIZE 2048
 
 int main() {
 	// Disable output buffering
@@ -59,7 +60,13 @@ int main() {
 	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 	printf("Client connected\n");
 
+	char* message[MAX_SIZE];
+	
+	while(recv(client_fd , message , MAX_SIZE , 0 ) != -1){
+
 	send(client_fd , PONG , strlen(PONG), 0); 
+
+}
 	
 	close(server_fd);
 
