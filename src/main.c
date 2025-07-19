@@ -51,8 +51,6 @@ char * parseBulkString(char ** input , int length){
 
 int parseLen(char **input){
 
-	printf("The parsed is of type %c \n" , **input); 
-
 	(*input)++; // Skip the initial character. 
 
 	int length = 0 ; 
@@ -134,7 +132,7 @@ void *routine(void *arg){
 
 				char* toSend = (char*)malloc(currlen + 5); 
 
-				sprintf(toSend , "$%d/r/n%s/r/n" , currlen , currentArg);
+				sprintf(toSend , "$%d/r/n%s/r/n" , strlen(toSend) , currentArg);
 
 				send(fd , toSend , currlen , 0); 
 
