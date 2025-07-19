@@ -7,23 +7,77 @@
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <ctype.h>
 
 #define PONG "+PONG\r\n"
 #define MAX_SIZE 2048
+#define MAX_ARGS 1024
+
+
 
 void *routine(void *arg){
 
 	int fd = *(int*)arg;
 	
-	char* buf[MAX_SIZE]; 
+	char buf[MAX_SIZE]; 
 
 	while(recv(fd , buf , MAX_SIZE , 0) != 0){
 
+		char* args[MAX_ARGS]; 
+		
+		int i = 0 ; 
+		
+
+		char* curr = strtok(buf , "\\r\\n"); 
+
+		while(curr != NULL){
+
+
+			args[i] = curr; 
+
+			curr = strtok(NULL , "\\r\\n"); 
+
+			i++;
+
+		}
+
+		char* command = args[2]; 
+
+		int commandLen = strlen(command); 
+
+		char lowerCommand[commandLen + 1]; 
+		strcpy(lowerCommand , command); 
+
+		for(int i = 0 ; i < commandLen; i++){
+
+			lowerCommand[i] = tolower(lowerCommand[i]);
+
+		}
+		lowerCommand[commandLen] = '\0'; 
+
+
+		if(strcmp(lowerCommand, "echo") == 0){
+
+			for(int currindex = 4 ; currindex < i ; currindex += 2){
+
+				char output[MAX_ARGS]; 
+				sprintf(output , "$%d\\r\\n%s\\r\\n" , (int)strlen(args[currindex]) , args[currindex]);
+
+				send(fd , output , strlen(output) , 0); 
+
+			}
+
+		}
+		else{
+
 		send(fd , PONG , strlen(PONG), 0); 
+	}
 
 	}
 
 	free(arg); 
+
+	close(fd); 
 
 }
 
@@ -76,6 +130,10 @@ int main() {
 
 	
 	int client_fd = 0; 
+
+	pthread_t offshoots[5]; 
+
+	int thread_index = 0 ; 
 	
 	while( (client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len)) != -1 ){
 	printf("Client connected\n");
@@ -84,20 +142,34 @@ int main() {
 
 	*arg = client_fd; 
 
-	pthread_t offshoot; 
+	if(thread_index == 5){
 
-	if(pthread_create(&offshoot , NULL , &routine , arg) == -1){
+		printf("Not able to connect.\n"); 
+		return 3; 
 
+	}
+
+	if(pthread_create(&offshoots[thread_index] , NULL , &routine , arg) == -1){
+
+		thread_index++; 
 		perror("Not able to create thread.\n"); 
 		return 2; 
 
 	}
 
-	
+
 	
 
 
 }
+
+	for(int i = 0 ; i < thread_index ; i++){
+
+		pthread_join(offshoots[i] , NULL); 
+
+	}
+
+
 	
 	close(server_fd);
 
