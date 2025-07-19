@@ -147,7 +147,11 @@ void *routine(void *arg){
 
 			char* toSend = (char*)malloc(currlen + 5); 
 
-			sprintf(toSend , "$%d/r/n%s/r/n" , (int)strlen(toSend) , currentArg);
+
+
+			sprintf(toSend , "$%d/r/n%s/r/n" , currlen + 5, currentArg);
+
+			
 
 			send(fd , toSend , currlen , 0); 
 
