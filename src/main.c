@@ -151,11 +151,11 @@ void *routine(void *arg){
 
 
 
-			sprintf(toSend , "$%d/r/n%s/r/n" , currlen + 5 + sizeof(currlen), currentArg);
+			sprintf(toSend , "$%d/r/n%s/r/n" , currlen, currentArg);
 
 			
 
-			send(fd , toSend , currlen + 5 + sizeof(currlen) , 0); 
+			send(fd , toSend , strlen(toSend), 0); 
 
 			free(currentArg);
 			free(toSend); 
