@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+#define PONG "+PONG\\r\\n"
+
 int main() {
 	// Disable output buffering
 	setbuf(stdout, NULL);
@@ -52,9 +54,12 @@ int main() {
 	
 	printf("Waiting for a client to connect...\n");
 	client_addr_len = sizeof(client_addr);
+
 	
-	accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 	printf("Client connected\n");
+
+	send(client_fd , PONG , sizeof(PONG), 0); 
 	
 	close(server_fd);
 
