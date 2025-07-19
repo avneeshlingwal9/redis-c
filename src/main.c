@@ -147,15 +147,15 @@ void *routine(void *arg){
 				
 			char* currentArg = parseBulkString(memoryAddress , currlen); 
 
-			char* toSend = (char*)malloc(currlen + 5); 
+			char* toSend = (char*)malloc(currlen + sizeof(currlen) + 5); 
 
 
 
-			sprintf(toSend , "$%d/r/n%s/r/n" , currlen, currentArg);
+			sprintf(toSend , "$%d/r/n%s/r/n" , currlen + 5 + sizeof(currlen), currentArg);
 
 			
 
-			send(fd , toSend , currlen + 5 , 0); 
+			send(fd , toSend , currlen + 5 + sizeof(currlen) , 0); 
 
 			free(currentArg);
 			free(toSend); 
