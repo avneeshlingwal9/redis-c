@@ -13,6 +13,88 @@
 #define MAX_SIZE 2048
 #define MAX_ARGS 1024
 
+enum Commands {
+	PING, 
+	ECH0, 
+	UNKNOWN,
+};
+
+
+
+char * parseBulkString(char ** input , int length){
+
+	char *str = (char*)malloc(length + 1);
+
+	if(str == NULL){
+
+		printf("Not able to allocate memory.\n");
+		return 1; 
+
+	}
+
+	strncpy(str , *input , length); 
+
+	str[length] = '\0'; 
+
+	(*input) += 2 ; // Skip CRLF.
+
+	return str; 
+
+}
+
+/**
+ * 
+ * One function to find length i.e to convert *2/r/n to 2. 
+ * 
+ * Another thing what should be the arguments. The buffer itself, so a pointer to the buffer. As we want to modify that. 
+ * Why not a pointer to buffer, because that will not update the buffer in the main function itself. 
+*/
+
+int parseLen(char **input){
+
+	printf("The parsed is of type %c \n" , **input); 
+
+	(*input)++; // Skip the initial character. 
+
+	int length = 0 ; 
+
+	// Atoi type function. 
+
+	while(**input != '\r' || **input != '\n'){
+
+		length = length * 10 + ((**input) - '0')*10; 
+
+		(*input)++; 
+
+	}
+
+	(*input) += 2; // Skip CRLF. 
+
+	return length;
+
+
+
+
+}
+
+enum Commands parseCommand(char *bulkstr){
+
+	if(strcasecmp(bulkstr , "echo") == 0){
+
+		return ECHO; 
+
+	}
+
+	if(strcasecmp(bulkstr , "ping") == 0){
+
+		return PING;
+	}
+
+	return UNKNOWN; 
+
+
+}
+
 
 
 void *routine(void *arg){
@@ -21,61 +103,58 @@ void *routine(void *arg){
 	
 	char buf[MAX_SIZE]; 
 
+	char** memoryAddress = &buf; 
+
+
+
 	while(recv(fd , buf , MAX_SIZE , 0) != 0){
 
-		char* args[MAX_ARGS]; 
-		
-		int i = 0 ; 
-		
+		int numArgs = parseLen(memoryAddress);
 
-		char* curr = strtok(buf , "\\r\\n"); 
+		for(int i = 0 ; i < numArgs ; i++){
 
-		while(curr != NULL){
+			int stringlength = parseLen(memoryAddress);
 
-
-			args[i] = curr; 
-
-			curr = strtok(NULL , "\\r\\n"); 
-
-			i++;
-
-		}
-
-		char* command = args[2]; 
-
-		int commandLen = strlen(command); 
-
-		char lowerCommand[commandLen + 1]; 
-		strcpy(lowerCommand , command); 
-
-		for(int i = 0 ; i < commandLen; i++){
-
-			lowerCommand[i] = tolower(lowerCommand[i]);
-
-		}
-		lowerCommand[commandLen] = '\0'; 
+			char* bulkstr = parseBulkString(memoryAddress , stringlength); 
 
 
-		if(strcmp(lowerCommand, "echo") == 0){
+			enum Commands command = bulkstr; 
 
-			for(int currindex = 4 ; currindex < i ; currindex += 2){
+			if(command == PING){
 
-				char output[MAX_ARGS]; 
-				sprintf(output , "$%d\r\n%s\r\n" , (int)strlen(args[currindex]) , args[currindex]);
-
-				send(fd , output , strlen(output) , 0); 
+				send(fd , PONG , MAX_SIZE , 0); 
 
 			}
+			else{
+
+				i++; // Skipping to next argument. 
+
+				int currlen = parseLen(memoryAddress);
+				
+				char* currentArg = parseBulkString(memoryAddress , currlen); 
+
+				char* toSend = (char*)malloc(currlen + 5); 
+
+				sprintf(toSend , "$%d/r/n%s/r/n" , currlen , currentArg);
+
+				send(fd , toSend , currlen , 0); 
+
+				free(currentArg);
+				free(currlen); 
+			}
+
 
 		}
-		else{
 
-		send(fd , PONG , strlen(PONG), 0); 
+
+
+
+
+		
+
 	}
 
-	}
 
-	free(arg); 
 
 	close(fd); 
 
