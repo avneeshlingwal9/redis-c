@@ -59,7 +59,7 @@ int main() {
 	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 	printf("Client connected\n");
 
-	send(client_fd , PONG , sizeof(PONG), 0); 
+	send(client_fd , PONG , strlen(PONG), 0); 
 	
 	close(server_fd);
 
