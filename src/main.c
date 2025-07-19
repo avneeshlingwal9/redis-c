@@ -6,9 +6,26 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define PONG "+PONG\r\n"
 #define MAX_SIZE 2048
+
+void *routine(void *arg){
+
+	int fd = *(int*)arg;
+	
+	char* buf[MAX_SIZE]; 
+
+	while(recv(fd , buf , MAX_SIZE , 0) != 0){
+
+		send(fd , PONG , strlen(PONG), 0); 
+
+	}
+
+	free(arg); 
+
+}
 
 
 int main() {
@@ -63,13 +80,24 @@ int main() {
 	while( (client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len)) != -1 ){
 	printf("Client connected\n");
 
-	char* message[MAX_SIZE];
+	int* arg = malloc(sizeof(int)); 
+
+	*arg = client_fd; 
+
+	pthread_t offshoot; 
+
+	if(pthread_create(&offshoot , NULL , &routine , arg) == -1){
+
+		perror("Not able to create thread.\n"); 
+		return 2; 
+
+	}
+
 	
-	while(recv(client_fd , message , MAX_SIZE , 0 ) != -1){
+	
 
-	send(client_fd , PONG , strlen(PONG), 0); 
 
-}}
+}
 	
 	close(server_fd);
 
