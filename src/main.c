@@ -8,11 +8,19 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <ctype.h>
-#include "uthash.h"
+#include <time.h>
 
 #define PONG "+PONG\r\n"
 #define MAX_SIZE 2048
 #define MAX_ARGS 1024
+#define INFINITY 1000000000
+
+enum Option{
+
+	PX ,
+	OTHER
+
+};
 
 enum Commands {
 	PING, 
@@ -27,20 +35,55 @@ typedef struct KeyValue{
 	char *key ;
 	char* value; 
 
+	struct timespec currTime; 
+
+	int expiretime; 
+
 	struct KeyValue* next; 
 
 
 
 } KeyValue;
 
+
+enum Option currOption(char *option){
+
+
+	if(strcasecmp(option, "px") == 0){
+
+		return PX;
+
+
+	}
+
+	return UNKNOWN; 
+
+
+
+}
+double getTimeDifference(struct timespec begin){
+
+	struct timespec curr; 
+
+	timespec_get(&curr , TIME_UTC); 
+
+	double diff = (curr.tv_sec - begin.tv_sec)* 1000.0 + (curr.tv_nsec - begin.tv_nsec)/1000000.0;
+
+	return diff; 
+
+
+}
+
 KeyValue* head = NULL; 
 
-KeyValue* initialize(char* aKey , char *aValue){
+KeyValue* initialize(char* aKey , char *aValue , int expiry){
 
 	KeyValue* newPair = (KeyValue*)malloc(sizeof(KeyValue)); 
 
 	newPair->key = aKey;
 	newPair->value = aValue;
+	timespec_get(&(newPair->currTime), TIME_UTC); 
+	newPair->expiretime = expiry;
 	newPair->next = NULL; 
 
 
@@ -66,10 +109,10 @@ void freeKeyValue(KeyValue* head){
 
 }
 
-KeyValue* setValue(char* aKey , char*aValue , KeyValue* head){
+KeyValue* setValue(char* aKey , char*aValue , int expiry , KeyValue* head){
 
 	if(head == NULL){
-		return initialize(aKey , aValue); 
+		return initialize(aKey , aValue , expiry); 
 	}
 
 	KeyValue* temp = head; 
@@ -80,7 +123,7 @@ KeyValue* setValue(char* aKey , char*aValue , KeyValue* head){
 
 	}
 
-	temp->next = initialize(aKey, aValue);
+	temp->next = initialize(aKey, aValue , expiry);
 
 	return head;
 
@@ -94,9 +137,13 @@ char* getValue(char* aKey , KeyValue* head){
 
 		if(strcmp(temp->key, aKey) == 0){
 
-			return temp->value; 
+			if(getTimeDifference(temp->currTime) < temp->expiretime){
+
+				return temp->value;
+			}
 
 		}
+		temp = temp->next; 
 
 	}
 
@@ -208,7 +255,9 @@ void *routine(void *arg){
 
 	unsigned char* input = buf; 
 
-	if(read(fd , buf , MAX_SIZE ) <= 0){
+	int bytesRead ; 
+
+	if( (bytesRead = read(fd , buf , MAX_SIZE )) <= 0){
 
 		printf("Connection terminated.\n"); 
 
@@ -281,13 +330,43 @@ void *routine(void *arg){
 
 			char* value = parseBulkString(&input , valueLen);
 
-			head = setValue(key , value , head); 
+			int expiry = INFINITY;
 
-			char* reply = (char*)malloc(5); 
+			printf("Bytes read %d \n", bytesRead); 
+
+		
+
+			if( buf + bytesRead > input){
+
+				int optlen = parseLen(&input); 
+				char* optionStr = parseBulkString(&input , optlen);
+
+				int expirlen = parseLen(&input); 
+
+				char* expiryStr = parseBulkString(&input, expirlen);
+
+				enum Option option = currOption(optionStr); 
+				free(optionStr);
+
+				if(option == PX){
+
+					expiry = atoi(expiryStr);
+
+					free(expiryStr);
+
+					
+
+				}
+
+			}
+
+			head = setValue(key , value , expiry , head); 
+
+			char* reply = (char*)malloc(6); 
 
 			sprintf(reply, "+OK\r\n"); 
 
-			send(fd , reply , 5, 0 );
+			send(fd , reply , strlen(reply), 0 );
 
 
 			free(reply); 
@@ -302,13 +381,27 @@ void *routine(void *arg){
 
 			char* value = getValue(key , head);
 
-			char* reply = (char*)malloc(strlen(value) + sizeof(strlen(value)) + 5);
+			if(value == NULL){
 
-			sprintf(reply , "$%d\r\n%s\r\n", strlen(value), value); 
+				char* reply = (char*)malloc(6);
 
-			send(fd , reply , strlen(reply) , 0); 
+				sprintf(reply, "$-1\r\n"); 
 
-			free(reply); 
+				send(fd, reply , strlen(reply), 0); 
+
+				free(reply); 
+				
+
+			}
+			else{
+					char* reply = (char*)malloc(strlen(value) + sizeof(strlen(value)) + 5);
+
+					sprintf(reply , "$%d\r\n%s\r\n", (int)strlen(value), value); 
+
+					send(fd , reply , strlen(reply) , 0); 
+
+					free(reply); 
+			}
 
 
 		}
