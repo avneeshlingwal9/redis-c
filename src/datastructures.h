@@ -191,6 +191,8 @@ KeyValueList* getKeyValueList(KeyValueList* head , char* key){
 
 void insertValue(KeyValueList* curr , char* value){
 
+	curr->numOfElement++; 
+
     Node* node = (Node*)malloc(sizeof(Node));
     node->value = strdup(value); 
 
@@ -208,7 +210,6 @@ void insertValue(KeyValueList* curr , char* value){
 
     curr->tail = curr->tail->next; 
 
-    curr->numOfElement++; 
 
 
 
