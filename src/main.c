@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <ctype.h>
+#include "uthash.h"
 
 #define PONG "+PONG\r\n"
 #define MAX_SIZE 2048
@@ -16,8 +17,93 @@
 enum Commands {
 	PING, 
 	ECHO, 
+	GET , 
+	SET,
 	UNKNOWN,
 };
+
+typedef struct KeyValue{
+
+	char *key ;
+	char* value; 
+
+	struct KeyValue* next; 
+
+
+
+} KeyValue;
+
+KeyValue* head = NULL; 
+
+KeyValue* initialize(char* aKey , char *aValue){
+
+	KeyValue* newPair = (KeyValue*)malloc(sizeof(KeyValue)); 
+
+	newPair->key = aKey;
+	newPair->value = aValue;
+	newPair->next = NULL; 
+
+
+}
+
+void freeKeyValue(KeyValue* head){
+
+	KeyValue* temp = head; 
+
+	while(temp != NULL){
+
+		temp = temp->next; 
+		free(head->key);
+		free(head->value);
+		free(head); 
+		
+
+		head = temp; 
+
+	}
+
+
+
+}
+
+KeyValue* setValue(char* aKey , char*aValue , KeyValue* head){
+
+	if(head == NULL){
+		return initialize(aKey , aValue); 
+	}
+
+	KeyValue* temp = head; 
+
+	while(temp->next != NULL){
+
+		temp = temp->next;
+
+	}
+
+	temp->next = initialize(aKey, aValue);
+
+	return head;
+
+}
+
+char* getValue(char* aKey , KeyValue* head){
+
+	KeyValue* temp = head; 
+	
+	while(temp != NULL){
+
+		if(strcmp(temp->key, aKey) == 0){
+
+			return temp->value; 
+
+		}
+
+	}
+
+	return NULL; 
+
+}
+
 
 
 
@@ -91,6 +177,15 @@ enum Commands parseCommand(char *bulkstr){
 
 		return PING;
 	}
+	if(strcasecmp(bulkstr , "get") == 0){
+
+		return GET;
+	}
+
+	if(strcasecmp(bulkstr , "set") == 0){
+
+		return SET;
+	}
 
 	return UNKNOWN; 
 
@@ -103,32 +198,42 @@ void *routine(void *arg){
 
 	int fd = *(int*)arg;
 
+	free(arg);
+
 	while(1){
 	
 	unsigned char *buf = (char*)malloc(MAX_SIZE);
 
-	unsigned char** memoryAddress = &buf; 
 
-	unsigned char* temp = buf; 
+
+	unsigned char* input = buf; 
 
 	if(read(fd , buf , MAX_SIZE ) <= 0){
 
 		printf("Connection terminated.\n"); 
-		free(buf);
 
+		free(buf);
+		close(fd);
 		return NULL; 
 
 	}
 
-	int numArgs = parseLen(memoryAddress);
+	int numArgs = parseLen(&input);
+
+	if(numArgs <= 0){
+
+		free(buf); 
+		return NULL;
+
+	}
 
 
 
-	for(int i = 0 ; i < numArgs ; i++){
+	
 
-		int stringlength = parseLen(memoryAddress);
+		int stringlength = parseLen(&input);
 
-		char* bulkstr = parseBulkString(memoryAddress , stringlength); 
+		char* bulkstr = parseBulkString(&input , stringlength); 
 
 		if(bulkstr == NULL){
 			return NULL; 
@@ -139,18 +244,18 @@ void *routine(void *arg){
 
 		enum Commands command = parseCommand(bulkstr); 
 
+		free(bulkstr);
+
 		if(command == PING){
 
 			send(fd , PONG , strlen(PONG) , 0); 
 
 		}
-		else{
+		else if(command == ECHO){
 
-			i++; // Skipping to next argument. 
-
-			int currlen = parseLen(memoryAddress);
+			int currlen = parseLen(&input);
 				
-			char* currentArg = parseBulkString(memoryAddress , currlen); 
+			char* currentArg = parseBulkString(&input , currlen); 
 
 			char* toSend = (char*)malloc(currlen + sizeof(currlen) + 5); 
 
@@ -167,17 +272,58 @@ void *routine(void *arg){
 			
 		}
 
+		else if(command == SET){
 
-	}
+			int keyLen = parseLen(&input); 
+			char* key = parseBulkString(&input , keyLen); 
+
+			int valueLen = parseLen(&input); 
+
+			char* value = parseBulkString(&input , valueLen);
+
+			head = setValue(key , value , head); 
+
+			char* reply = (char*)malloc(5); 
+
+			sprintf(reply, "+OK\r\n"); 
+
+			send(fd , reply , 5, 0 );
+
+
+			free(reply); 
+			
+
+		}
+
+		else if(command == GET){
+
+			int keyLen = parseLen(&input); 
+			char* key = parseBulkString(&input , keyLen);
+
+			char* value = getValue(key , head);
+
+			char* reply = (char*)malloc(strlen(value) + sizeof(strlen(value)) + 5);
+
+			sprintf(reply , "$%d\r\n%s\r\n", strlen(value), value); 
+
+			send(fd , reply , strlen(reply) , 0); 
+
+			free(reply); 
+
+
+		}
+
+
 	
-	free(temp); 
+	
+	free(buf); 
 
 	}
 
 
 
 
-	free(arg); 
+
 
 	close(fd); 
 
@@ -245,11 +391,15 @@ int main() {
 	pthread_t offshoot;
 
 	if(pthread_create(&offshoot , NULL , &routine , arg) == -1){
+
+
  
 		perror("Not able to create thread.\n"); 
 		return 2; 
 
 	}
+
+	pthread_detach(offshoot);
 
 
 	
@@ -258,7 +408,7 @@ int main() {
 }
 
 
-
+	freeKeyValue(head); 
 	
 	close(server_fd);
 
