@@ -1,13 +1,7 @@
-#include <stdio.h>
+
 #include <pthread.h>
 #include <sys/socket.h>
-#include "datastructures.h"
-#define RESP_PONG "+PONG\r\n"
-#define RESP_OK "+OK\r\n"
-#define RESP_NULL "$-1\r\n"
-#define MAX_SIZE 2048
-#define MAX_ARGS 1024
-#define INFINITY 1000000000
+#include "parser.h"
 
 
 pthread_mutex_t mutex; 
@@ -17,96 +11,6 @@ KeyValue* keyValueHead = NULL;
 KeyValueList* keyValueListHead = NULL;
 KeyValueList* keyValueListTail = NULL; 
 
-
-char * parseBulkString( char ** input , int length){
-
-	char *str = (char*)malloc(length + 1);
-
-	if(str == NULL){
-
-		printf("Not able to allocate memory.\n"); 
-
-		return NULL;
-
-	}
-
-	strncpy(str , *input , length); 
-
-	str[length] = '\0'; 
-
-	(*input) += length;
-
-	(*input) += 2 ; // Skip CRLF.
-
-	return str; 
-
-}
-
-/**
- * 
- * One function to find length i.e to convert *2/r/n to 2. 
- * 
- * Another thing what should be the arguments. The buffer itself, so a pointer to the buffer. As we want to modify that. 
- * Why not a pointer to buffer, because that will not update the buffer in the main function itself. 
-*/
-
-int parseLen( char **input){
-
-
-	(*input)++; // Skip the initial character. 
-
-	int length = 0 ; 
-
-	// Atoi type function. 
-
-	while(**input != '\r'){
-
-		length = length * 10 + (**input - '0'); 
-
-		(*input)++; 
-
-	}
-
-	(*input) += 2; // Skip CRLF. 
-
-	return length;
-
-
-
-
-}
-
-enum Commands parseCommand(char *bulkstr){
-
-	if(strcasecmp(bulkstr , "echo") == 0){
-
-		return ECHO; 
-
-	}
-
-	if(strcasecmp(bulkstr , "ping") == 0){
-
-		return PING;
-	}
-	if(strcasecmp(bulkstr , "get") == 0){
-
-		return GET;
-	}
-
-	if(strcasecmp(bulkstr , "set") == 0){
-
-		return SET;
-	}
-
-    if(strcasecmp(bulkstr , "rpush") == 0){
-
-        return RPUSH;
-    }
-
-	return UNKNOWN; 
-
-
-}
 
 
 
@@ -316,6 +220,8 @@ void *routine(void *arg){
 
             char* tosend = (char*)malloc(digit + 4); 
 
+			
+
             sprintf(tosend , ":%d\r\n" , numEl);
 
             send(fd, tosend , strlen(tosend) , 0);
@@ -332,7 +238,60 @@ void *routine(void *arg){
         }
 
 
-	
+		else if(command == LRANGE){
+
+			int keylen = parseLen(&input);
+			char* key = parseBulkString(&input , keylen);
+
+			int startLen = parseLen(&input);
+
+			char* startStr = parseBulkString(&input , startLen);
+
+			int endLen = parseLen(&input);
+
+			char* endStr = parseBulkString(&input , endLen);
+
+			int start = atoi(startStr);
+
+			int end = atoi(endStr); 
+
+			int numberOfElements = 0; 
+
+			char** values = getElements(keyValueListHead, key , start , end, &numberOfElements); 
+
+			if(values == NULL){
+
+				send(fd , RESP_NULL_ARRAY , strlen(RESP_NULL_ARRAY) , 0); 
+
+
+			}
+			else{
+
+			char* tosend = encodeArray(values , numberOfElements); 
+
+			send(fd , tosend , strlen(tosend), 0); 
+			
+			free(tosend); 
+
+			free(values);
+
+		}
+
+
+			free(key);
+			free(startStr);
+
+			free(endStr);
+
+
+
+
+
+
+
+
+
+		}
 	
 	free(buf); 
 

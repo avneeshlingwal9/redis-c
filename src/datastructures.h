@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 enum Option{
@@ -16,12 +17,13 @@ enum Commands {
 	SET,
 	UNKNOWN,
     RPUSH,
+	LRANGE,
 };
 typedef struct Node{
 
 	char* value ; 
 
-	struct Node* next; 
+	struct Node* nextNode; 
 
 
 }Node;
@@ -92,6 +94,11 @@ double getTimeDifference(struct timespec begin){
 KeyValue* initialize(char* aKey , char *aValue , int expiry){
 
 	KeyValue* newPair = (KeyValue*)malloc(sizeof(KeyValue)); 
+
+	if(newPair == NULL){
+
+		return NULL; 
+	}
 
 	newPair->key = strdup(aKey);
 	newPair->value = strdup(aValue);
@@ -175,7 +182,7 @@ KeyValueList* getKeyValueList(KeyValueList* head , char* key){
 
         if(strcmp(temp->key , key) == 0){
 
-			printf("%s\n", temp->key);
+
 
             return temp;
 
@@ -196,6 +203,10 @@ void insertValue(KeyValueList* curr , char* value){
 	curr->numOfElement++; 
 
     Node* node = (Node*)malloc(sizeof(Node));
+
+	if(node == NULL){
+		return; 
+	}
     node->value = strdup(value); 
 
     if(curr->head == NULL){
@@ -205,7 +216,7 @@ void insertValue(KeyValueList* curr , char* value){
     }
     else{
 
-        curr->tail->next = node;
+        curr->tail->nextNode = node;
 
     }
 
@@ -234,9 +245,14 @@ int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList**
 
     else{
 
-		printf("Error here %s \n" , key); 
+
 
         KeyValueList* newKey = (KeyValueList*)malloc(sizeof(KeyValueList));
+
+		if(newKey == NULL){
+
+			return -1; 
+		}
 
         newKey->key = strdup(key); 
         newKey->numOfElement = 0 ; 
@@ -245,9 +261,9 @@ int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList**
         newKey->next = NULL; 
 
 
-        insertValue(newKey , key); 
+        insertValue(newKey , value); 
 
-		printf(newKey->key); 
+
 
 
         if(*head == NULL){
@@ -277,3 +293,104 @@ int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList**
 
 }
 
+char **getElements(KeyValueList* keyValueListHead , char* key , int start , int end , int *numberOfElements){
+
+	KeyValueList* desiredKey = getKeyValueList(keyValueListHead , key);
+
+
+	if(desiredKey == NULL || (start >= desiredKey->numOfElement) || (start > end)){
+
+		return NULL; 
+	}
+
+
+	if(end >= desiredKey->numOfElement){
+
+		end = desiredKey->numOfElement - 1;
+
+	}
+	int elementsCount = end - start + 1; 
+
+	*numberOfElements = elementsCount;
+
+	char ** array = (char**)malloc(sizeof(char*)* elementsCount);
+
+	if(array == NULL){
+
+		return NULL; 
+	}
+
+	int i = 0 ; 
+
+	Node* temp = desiredKey->head;
+
+	// Reach till start index. 
+
+	while(i < start){
+
+		temp = temp->nextNode;
+		i++;
+	}
+
+	while(i <= end){
+
+		array[i - start] = strdup(temp->value);
+		i++;
+		temp = temp->nextNode; 
+
+	}
+
+
+
+
+
+
+
+
+
+	return array; 
+
+}
+
+void freeNode(Node* nodeHead){
+
+	Node* tempHead = nodeHead; 
+
+	while(tempHead != NULL){
+
+		tempHead = tempHead->nextNode;
+
+		free(nodeHead->value);
+
+		free(nodeHead);
+
+		nodeHead = tempHead;
+
+	}
+
+
+}
+
+void freeKeyValueList(KeyValueList* keyHead){
+
+	KeyValueList* temp = keyHead; 
+
+	while(temp != NULL){
+
+		temp = temp->next;
+
+		freeNode(keyHead->head);
+		free(keyHead->key);
+		free(keyHead);
+
+		keyHead = temp; 
+
+	}
+
+
+
+
+
+
+
+}
