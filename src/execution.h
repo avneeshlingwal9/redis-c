@@ -322,16 +322,75 @@ void *routine(void *arg){
 
 			char* key = parseBulkString(&input , keylen);
 
-			char* value = lpop(keyValueListHead , key); 
+			if(buf + bytesRead > input){
+				// Extra arguments. 
 
-			char* tosend = encodeStr(value);
+				int argLen = parseLen(&input);
 
-			free(value);
+				char* argStr = parseBulkString(&input , argLen);
 
-			send(fd , tosend, strlen(tosend), 0);
+				int toRemove = atoi(argStr);
 
-			free(tosend); 
+				pthread_mutex_lock(&mutex);
 
+				char** arr = lpopMultiple(keyValueListHead, key , toRemove);
+
+				pthread_mutex_unlock(&mutex);
+
+				if(arr == NULL){
+
+					send(fd , RESP_NULL , strlen(RESP_NULL), 0); 
+
+
+
+				}
+				else{
+
+				char* toSend = encodeArray(arr , toRemove); 
+
+				free(arr);
+
+				send(fd, toSend , strlen(toSend), 0);
+
+				free(toSend);
+
+				free(argStr);
+			
+			}
+
+
+
+
+
+
+			}
+
+			else{
+
+				pthread_mutex_lock(&mutex);
+
+				char* value = lpop(keyValueListHead , key); 
+
+				pthread_mutex_unlock(&mutex); 
+
+				if(value == NULL){
+
+					send(fd , RESP_NULL , strlen(RESP_NULL), 0); 
+
+				}
+				else{
+
+					char* tosend = encodeStr(value);
+
+					free(value);
+
+					send(fd , tosend, strlen(tosend), 0);
+
+					free(tosend); 
+				}
+			}
+
+			free(key); 
 
 
 		}

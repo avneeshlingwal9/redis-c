@@ -500,3 +500,61 @@ char* lpop(KeyValueList* keyHead , char* key){
 
 }
 
+
+char** lpopMultiple(KeyValueList* listHead , char* key , int len){
+
+	KeyValueList* desired = getKeyValueList(listHead , key); 
+
+
+	if(desired == NULL){
+
+		return NULL;
+
+	}
+
+	if(len > desired->numOfElement){
+
+		len = desired->numOfElement;
+
+	}
+
+	char** arr = (char**)malloc(len); 
+
+	Node* temp = desired->head;
+	Node* prev = temp; 
+
+	for(int i = 0 ; i < len ; i++){
+
+		arr[i] = temp->value;
+
+		temp = temp->nextNode; 
+
+		prev->nextNode = NULL;
+		
+		free(prev); 
+
+		prev = temp; 
+
+		desired->numOfElement--;
+
+
+
+
+
+
+
+
+
+	}
+
+	desired->head = prev; 
+
+	return arr; 
+
+
+
+
+
+
+
+}
