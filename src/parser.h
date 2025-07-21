@@ -119,11 +119,13 @@ enum Commands parseCommand(char *bulkstr){
 
 char* encodeStr(char *str){
 
-    int numDigits = snprintf(NULL , 0, "%d" , (int)strlen(str));
+    int len = strlen(str);
 
-    char* encodedStr = (char*)malloc(strlen(str) + 6 + numDigits);
+    int size = snprintf(NULL , 0 , "$%d\r\n%s\r\n", len , str) + 1 ; 
 
-    sprintf(encodedStr,"$%d\r\n%s\r\n", (int)strlen(str) ,str);
+    char* encodedStr = (char*)malloc(sizeof(size));
+
+    snprintf(encodedStr, size  , "$%d\r\n%s\r\n", (int)strlen(str) ,str);
 
     return encodedStr;
     
@@ -131,34 +133,39 @@ char* encodeStr(char *str){
 }
 char* encodeArray(char** values , int numEl){
 
-    
-
-    char *encodedArr = (char*)malloc(MAX_SIZE); 
-
-    int countEl = 0; 
-
-    sprintf(encodedArr, "*%d\r\n", numEl);
-
-    countEl += strlen(encodedArr);
+    // 1 for NULL terminator.
+    int totalSize = snprintf(NULL , 0 , "*%d\r\n" , numEl) + 1; 
 
     for(int i = 0 ; i < numEl; i++){
 
-        char* encodedStr = encodeStr(values[i]);
+        int len = strlen(values[i]); 
+        
+        totalSize += snprintf(NULL , 0 , "$%d\r\n%s\r\n", len , values[i]);
 
-        countEl += strlen(encodedStr);
+    }
+    
+    
+    char* encodedArray = (char*)malloc(totalSize); 
 
-        strcat(encodedArr , encodedStr);
+    int offset = snprintf(encodedArray, totalSize, "*%d\r\n" , numEl);
 
-        free(encodedStr);
+    for(int i = 0 ; i < numEl; i++){
+
+        int len = strlen(values[i]); 
+
+        offset += snprintf(encodedArray + offset , totalSize , "$%d\r\n%s\r\n" , len , values[i]);
 
         free(values[i]);
 
 
+
     }
 
-    encodedArr = (char*)realloc((void*)encodedArr , countEl);
+
+    return encodedArray;
 
 
-    return encodedArr;
+   
+
 
 }
