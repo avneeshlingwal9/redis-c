@@ -10,7 +10,7 @@ enum Option{
 
 };
 
-enum Commands {
+typedef enum Commands {
 	PING, 
 	ECHO, 
 	GET , 
@@ -18,7 +18,8 @@ enum Commands {
 	UNKNOWN,
     RPUSH,
 	LRANGE,
-};
+	LPUSH,
+}Command;
 typedef struct Node{
 
 	char* value ; 
@@ -197,7 +198,7 @@ KeyValueList* getKeyValueList(KeyValueList* head , char* key){
 
 }
 
-void insertValue(KeyValueList* curr , char* value){
+void insertValue(KeyValueList* curr , char* value , Command command){
 
 	curr->numOfElement++; 
 
@@ -211,15 +212,36 @@ void insertValue(KeyValueList* curr , char* value){
     if(curr->head == NULL){
 
         curr->head = node;
+		curr->tail = node;
+
+		return;
 
     }
-    else{
 
-        curr->tail->nextNode = node;
+	if(command == LPUSH){
 
-    }
+		// Insert at head. 
 
-    curr->tail = node; 
+		node->nextNode = curr->head; 
+
+		curr->head = node; 
+
+
+
+	}
+
+	else{
+
+		curr->tail->nextNode = node;
+
+		curr->tail = node; 
+
+	}
+
+
+
+
+
 
 
 
@@ -227,7 +249,10 @@ void insertValue(KeyValueList* curr , char* value){
 }
 
 
-int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList** tail){
+
+
+
+int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList** tail , Command command){
 
  
 
@@ -235,7 +260,7 @@ int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList**
 
     if(keyList != NULL){
 
-        insertValue(keyList , value);
+        insertValue(keyList , value, command);
 
         return keyList->numOfElement;
         
@@ -260,7 +285,7 @@ int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList**
         newKey->next = NULL; 
 
 
-        insertValue(newKey , value); 
+        insertValue(newKey , value, command); 
 
 
 
@@ -292,8 +317,9 @@ int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList**
 
 }
 
+
 char **getElements(KeyValueList* keyValueListHead , char* key , int start , int end , int *numberOfElements){
-	
+
 		KeyValueList* desiredKey = getKeyValueList(keyValueListHead , key);
 		if(start < 0){
 
@@ -405,6 +431,7 @@ void freeNode(Node* nodeHead){
 
 void freeKeyValueList(KeyValueList* keyHead){
 
+
 	KeyValueList* temp = keyHead; 
 
 	while(temp != NULL){
@@ -426,3 +453,4 @@ void freeKeyValueList(KeyValueList* keyHead){
 
 
 }
+

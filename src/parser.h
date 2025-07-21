@@ -97,6 +97,11 @@ enum Commands parseCommand(char *bulkstr){
 		return LRANGE;
 
 	}
+    if(strcasecmp(bulkstr, "lpush") == 0){
+
+        return LPUSH;
+
+    }
 
 	return UNKNOWN; 
 

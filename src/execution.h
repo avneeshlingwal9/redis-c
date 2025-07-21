@@ -187,7 +187,7 @@ void *routine(void *arg){
 
 
 		}
-        else if(command == RPUSH){
+        else if(command == RPUSH || command == LPUSH){
 
             int keyLen = parseLen(&input); 
             char* key = parseBulkString(&input , keyLen);
@@ -204,7 +204,7 @@ void *routine(void *arg){
 
 				pthread_mutex_lock(&mutex);
 
-				numEl = insertKeyList(&keyValueListHead, key , value , &keyValueListTail); 
+				numEl = insertKeyList(&keyValueListHead, key , value , &keyValueListTail , command); 
 
 				pthread_mutex_unlock(&mutex); 
 
@@ -255,7 +255,11 @@ void *routine(void *arg){
 
 			int numberOfElements = 0; 
 
+			pthread_mutex_lock(&mutex);
+
 			char** values = getElements(keyValueListHead, key , start , end, &numberOfElements); 
+
+			pthread_mutex_unlock(&mutex);
 
 			if(values == NULL){
 
