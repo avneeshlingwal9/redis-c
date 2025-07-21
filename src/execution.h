@@ -289,17 +289,30 @@ void *routine(void *arg){
             int keyLen = parseLen(&input); 
             char* key = parseBulkString(&input , keyLen);
 
-            int valueLen = parseLen(&input);
+			int numOfValues = numArgs - 2 ; 
 
-            char* value = parseBulkString(&input , valueLen);
+			int numEl = 0;
 
-			pthread_mutex_lock(&mutex);
+			for(int i = 0 ; i < numOfValues ; i++){
 
-            int numEl = insertKeyList(&keyValueListHead, key , value , &keyValueListTail); 
+				int valueLen = parseLen(&input);
 
-			pthread_mutex_unlock(&mutex); 
+				char* value = parseBulkString(&input , valueLen);
+
+				pthread_mutex_lock(&mutex);
+
+				numEl = insertKeyList(&keyValueListHead, key , value , &keyValueListTail); 
+
+				pthread_mutex_unlock(&mutex); 
+
+				free(value);
+
+
+			}
 
             int digit = snprintf(NULL , 0 , "%d" , numEl);
+
+
 
             char* tosend = (char*)malloc(digit + 4); 
 
@@ -309,7 +322,6 @@ void *routine(void *arg){
 
 			free(key);
 
-			free(value);
 
 			free(tosend); 
 
