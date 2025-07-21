@@ -102,6 +102,11 @@ enum Commands parseCommand(char *bulkstr){
         return LPUSH;
 
     }
+    if(strcasecmp(bulkstr , "llen") == 0){
+
+        return LLEN;
+
+    }
 
 	return UNKNOWN; 
 

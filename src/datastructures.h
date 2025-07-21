@@ -19,6 +19,7 @@ typedef enum Commands {
     RPUSH,
 	LRANGE,
 	LPUSH,
+	LLEN,
 }Command;
 typedef struct Node{
 
@@ -451,6 +452,14 @@ void freeKeyValueList(KeyValueList* keyHead){
 
 
 
+
+}
+
+int getCount(KeyValueList* head , char* key){
+
+	KeyValueList* desired = getKeyValueList(head, key); 
+
+	return desired == NULL ? 0 : desired->numOfElement; 
 
 }
 

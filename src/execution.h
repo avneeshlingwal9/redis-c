@@ -294,6 +294,27 @@ void *routine(void *arg){
 
 
 		}
+
+		else if(command == LLEN){
+
+			int keylen = parseLen(&input);
+
+			char* key = parseBulkString(&input , keylen);
+
+			int count = getCount(keyValueListHead , key);
+			
+			int digits = snprintf(NULL , 0 , "%d" , count);
+
+			char* toSend = (char*)malloc(digits + 4);
+
+			sprintf(toSend , ":%d\r\n" , count);
+
+			send(fd , toSend , strlen(toSend), 0); 
+
+			free(toSend); 
+
+
+		}
 	
 	free(buf); 
 
