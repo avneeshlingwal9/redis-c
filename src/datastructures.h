@@ -28,7 +28,6 @@ typedef struct Node{
 
 }Node;
 
-
 typedef struct KeyValueList{
 
 	char* key;
@@ -294,8 +293,37 @@ int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList**
 }
 
 char **getElements(KeyValueList* keyValueListHead , char* key , int start , int end , int *numberOfElements){
+	
+		KeyValueList* desiredKey = getKeyValueList(keyValueListHead , key);
+		if(start < 0){
 
-	KeyValueList* desiredKey = getKeyValueList(keyValueListHead , key);
+		if(abs(start) >= desiredKey->numOfElement){
+
+			start = 0; 
+
+		}
+		else{
+
+		start = desiredKey->numOfElement + start; 
+	}
+
+	}
+
+	if(end < 0){
+
+		if(abs(end) >= desiredKey->numOfElement){
+			end = 0 ;
+		}
+		else{
+
+			end = desiredKey->numOfElement + end ; 
+
+		}
+
+
+	}
+
+
 
 
 	if(desiredKey == NULL || (start >= desiredKey->numOfElement) || (start > end)){
@@ -303,6 +331,10 @@ char **getElements(KeyValueList* keyValueListHead , char* key , int start , int 
 		return NULL; 
 	}
 
+
+
+
+	printf("%d  %d \n" , start , end ); 
 
 	if(end >= desiredKey->numOfElement){
 

@@ -10,6 +10,7 @@
 
 
 
+
 int main() {
 	// Disable output buffering
 	setbuf(stdout, NULL);
@@ -22,6 +23,8 @@ int main() {
 	//
 	int server_fd, client_addr_len;
 	struct sockaddr_in client_addr;
+	
+	pthread_mutex_init(&mutex , NULL);
 	
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd == -1) {
@@ -67,7 +70,7 @@ int main() {
 	int* arg = malloc(sizeof(int)); 
 
 	*arg = client_fd; 
-	pthread_mutex_init(&mutex , NULL);
+
 
 	pthread_t offshoot;
 

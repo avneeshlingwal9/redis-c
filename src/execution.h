@@ -3,7 +3,6 @@
 #include <sys/socket.h>
 #include "parser.h"
 
-
 pthread_mutex_t mutex; 
 
 KeyValue* keyValueHead = NULL;
@@ -220,7 +219,7 @@ void *routine(void *arg){
 
             char* tosend = (char*)malloc(digit + 4); 
 
-			
+
 
             sprintf(tosend , ":%d\r\n" , numEl);
 
@@ -252,7 +251,6 @@ void *routine(void *arg){
 			char* endStr = parseBulkString(&input , endLen);
 
 			int start = atoi(startStr);
-
 			int end = atoi(endStr); 
 
 			int numberOfElements = 0; 
