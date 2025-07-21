@@ -375,7 +375,7 @@ char **getElements(KeyValueList* keyValueListHead , char* key , int start , int 
 
 
 
-	printf("%d  %d \n" , start , end ); 
+
 
 	if(end >= desiredKey->numOfElement){
 
@@ -487,6 +487,8 @@ char* lpop(KeyValueList* keyHead , char* key){
 	}
 
 	Node* frontNode = removeFromLeft(&desired->head);
+
+	desired->numOfElement--;
 
 	char* toReturn = frontNode->value;
 	
