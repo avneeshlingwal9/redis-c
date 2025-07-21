@@ -315,6 +315,26 @@ void *routine(void *arg){
 
 
 		}
+
+		else if(command == LPOP){
+
+			int keylen = parseLen(&input);
+
+			char* key = parseBulkString(&input , keylen);
+
+			char* value = lpop(keyValueListHead , key); 
+
+			char* tosend = encodeStr(value);
+
+			free(value);
+
+			send(fd , tosend, strlen(tosend), 0);
+
+			free(tosend); 
+
+
+
+		}
 	
 	free(buf); 
 

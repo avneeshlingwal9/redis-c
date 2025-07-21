@@ -20,6 +20,7 @@ typedef enum Commands {
 	LRANGE,
 	LPUSH,
 	LLEN,
+	LPOP,
 }Command;
 typedef struct Node{
 
@@ -249,7 +250,18 @@ void insertValue(KeyValueList* curr , char* value , Command command){
 
 }
 
+Node* removeFromLeft(Node* head){
 
+	Node* temp = head; 
+
+	head = temp->nextNode; 
+
+	temp->nextNode = NULL; 
+
+	return temp;
+
+
+}
 
 
 
@@ -460,6 +472,27 @@ int getCount(KeyValueList* head , char* key){
 	KeyValueList* desired = getKeyValueList(head, key); 
 
 	return desired == NULL ? 0 : desired->numOfElement; 
+
+}
+
+char* lpop(KeyValueList* keyHead , char* key){
+
+	KeyValueList* desired = getKeyValueList(keyHead , key);
+
+	if(desired == NULL){
+
+		return NULL;
+	}
+
+	Node* frontNode = removeFromLeft(desired->head);
+
+	char* toReturn = frontNode->value;
+	
+	free(frontNode);
+
+	return toReturn;
+
+
 
 }
 
