@@ -250,15 +250,17 @@ void insertValue(KeyValueList* curr , char* value , Command command){
 
 }
 
-Node* removeFromLeft(Node* head){
+Node* removeFromLeft(Node** head){
 
-	Node* temp = head; 
+	Node* temp = *head; 
 
-	head = temp->nextNode; 
+	*head = temp->nextNode; 
 
-	temp->nextNode = NULL; 
+
+	temp->nextNode = NULL;
 
 	return temp;
+
 
 
 }
@@ -484,7 +486,7 @@ char* lpop(KeyValueList* keyHead , char* key){
 		return NULL;
 	}
 
-	Node* frontNode = removeFromLeft(desired->head);
+	Node* frontNode = removeFromLeft(&desired->head);
 
 	char* toReturn = frontNode->value;
 	
