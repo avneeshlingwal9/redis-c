@@ -67,6 +67,7 @@ int main() {
 	int* arg = malloc(sizeof(int)); 
 
 	*arg = client_fd; 
+	pthread_mutex_init(&mutex , NULL);
 
 	pthread_t offshoot;
 

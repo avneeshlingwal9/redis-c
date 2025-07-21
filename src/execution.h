@@ -10,6 +10,7 @@
 #define INFINITY 1000000000
 
 
+pthread_mutex_t mutex; 
 
 KeyValue* keyValueHead = NULL;
 
@@ -191,6 +192,7 @@ void *routine(void *arg){
 			
 		}
 
+
 		else if(command == SET){
 
 			int keyLen = parseLen(&input); 
@@ -229,7 +231,11 @@ void *routine(void *arg){
 
 			}
 
+			pthread_mutex_lock(&mutex); 
+
 			keyValueHead = setValue(key , value , expiry , keyValueHead); 
+
+			pthread_mutex_unlock(&mutex); 
 
 			free(key);
 			free(value);
@@ -246,9 +252,14 @@ void *routine(void *arg){
 		else if(command == GET){
 
 			int keyLen = parseLen(&input); 
+
 			char* key = parseBulkString(&input , keyLen);
 
+			pthread_mutex_lock(&mutex);
+
 			char* value = getValue(key , keyValueHead);
+
+			pthread_mutex_unlock(&mutex); 
 
 			if(value == NULL){
 
@@ -282,7 +293,11 @@ void *routine(void *arg){
 
             char* value = parseBulkString(&input , valueLen);
 
-            int numEl = insertKeyList(keyValueListHead, key , value , keyValueListTail); 
+			pthread_mutex_lock(&mutex);
+
+            int numEl = insertKeyList(&keyValueListHead, key , value , &keyValueListTail); 
+
+			pthread_mutex_unlock(&mutex); 
 
             int digit = snprintf(NULL , 0 , "%d" , numEl);
 
@@ -291,6 +306,12 @@ void *routine(void *arg){
             sprintf(tosend , ":%d\r\n" , numEl);
 
             send(fd, tosend , strlen(tosend) , 0);
+
+			free(key);
+
+			free(value);
+
+			free(tosend); 
 
 
 

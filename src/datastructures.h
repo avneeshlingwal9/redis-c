@@ -175,6 +175,8 @@ KeyValueList* getKeyValueList(KeyValueList* head , char* key){
 
         if(strcmp(temp->key , key) == 0){
 
+			printf("%s\n", temp->key);
+
             return temp;
 
         }
@@ -199,7 +201,6 @@ void insertValue(KeyValueList* curr , char* value){
     if(curr->head == NULL){
 
         curr->head = node;
-        curr->tail = node; 
 
     }
     else{
@@ -208,7 +209,7 @@ void insertValue(KeyValueList* curr , char* value){
 
     }
 
-    curr->tail = curr->tail->next; 
+    curr->tail = node; 
 
 
 
@@ -216,11 +217,11 @@ void insertValue(KeyValueList* curr , char* value){
 }
 
 
-int insertKeyList(KeyValueList* head , char* key , char* value , KeyValueList* tail){
+int insertKeyList(KeyValueList** head , char* key , char* value , KeyValueList** tail){
 
  
 
-    KeyValueList* keyList = getKeyValueList(head , key); 
+    KeyValueList* keyList = getKeyValueList(*head , key); 
 
     if(keyList != NULL){
 
@@ -233,9 +234,11 @@ int insertKeyList(KeyValueList* head , char* key , char* value , KeyValueList* t
 
     else{
 
+		printf("Error here %s \n" , key); 
+
         KeyValueList* newKey = (KeyValueList*)malloc(sizeof(KeyValueList));
 
-        newKey->key = key; 
+        newKey->key = strdup(key); 
         newKey->numOfElement = 0 ; 
         newKey->head = NULL; 
         newKey->tail = NULL;
@@ -244,21 +247,23 @@ int insertKeyList(KeyValueList* head , char* key , char* value , KeyValueList* t
 
         insertValue(newKey , key); 
 
+		printf(newKey->key); 
 
-        if(head == NULL){
 
-            head = newKey;
-            tail = newKey;
+        if(*head == NULL){
+
+            *head = newKey;
+
 
         }
 
         else{
 
-            tail->next = newKey; 
+            (*tail)->next = newKey; 
 
         }
 
-        tail = tail->next; 
+        *tail = newKey; 
 
         return newKey->numOfElement;
         
